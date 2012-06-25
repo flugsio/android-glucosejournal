@@ -1,0 +1,13 @@
+bin/
+out/
+gen/
+target/
+libs/
+obj/
+R.java
+.settings/
+*.class
+local.properties
+*.apk
+*.ap_
+*.dex

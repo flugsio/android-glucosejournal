@@ -3,7 +3,7 @@
 	<name>GlucoseJournalTest</name>
 	<comment></comment>
 	<projects>
-		<project>GlucoseJournal</project>
+		<project>se.huffyreek.glucosejournal.GlucoseJournalActivity</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

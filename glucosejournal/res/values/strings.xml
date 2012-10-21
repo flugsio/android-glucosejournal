@@ -2,6 +2,11 @@
 <resources>
 
     <string name="hello">Hello World, GlucoseJournalActivity!</string>
-    <string name="app_name">GlucoseJournal</string>
+    <string name="app_name">Glucose Journal</string>
+    <string name="edit_at">Time</string>
+    <string name="edit_glucose">Glucose</string>
+    <string name="edit_carbohydrates">Carbs</string>
+    <string name="edit_dose">Dose</string>
+    <string name="button_save">OK</string>
 
 </resources>

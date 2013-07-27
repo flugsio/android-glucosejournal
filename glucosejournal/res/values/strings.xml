@@ -8,5 +8,8 @@
     <string name="edit_carbohydrates">Carbs</string>
     <string name="edit_dose">Dose</string>
     <string name="button_save">OK</string>
+    <string name="edit_menu_button">Edit</string>
+    <string name="change_date_menu_button">Change Date</string>
+    <string name="delete_menu_button">Delete</string>
 
 </resources>

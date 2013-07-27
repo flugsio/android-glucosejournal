@@ -10,6 +10,13 @@
         android:orientation="horizontal" >
 
         <EditText
+            android:id="@+id/edit_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:visibility="gone" />
+                
+        <EditText
             android:id="@+id/edit_at"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -57,11 +64,17 @@
         android:text="@string/hello" /
     -->
 
+	<LinearLayout
+        android:id="@+id/list_entries_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+    </LinearLayout>
     <LinearLayout
         android:id="@+id/list_entries"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical" >
+        android:orientation="vertical">
     </LinearLayout>
 
 </LinearLayout>

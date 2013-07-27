@@ -4,14 +4,18 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import se.huffyreek.glucosejournal.database.GlucoseJournalDatabaseHelper;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
+import android.text.format.Time;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.FocusFinder;
@@ -25,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class GlucoseJournalActivity extends Activity {
+	private static final String TAG = "GlucoseJournalActivity";
 	
 	private List<JournalEntry> journalEntries;
 	private EditText editAt;
@@ -32,6 +37,7 @@ public class GlucoseJournalActivity extends Activity {
 	private EditText editCarbohydrates;
 	private EditText editDose;
 	private Button   buttonSave;
+	private GlucoseJournalDatabaseHelper dbHandler;
 	
     /** Called when the activity is first created. */
     @Override
@@ -39,10 +45,12 @@ public class GlucoseJournalActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         
-        journalEntries = new ArrayList<JournalEntry>();
-        refreshEntries();
+        dbHandler = new GlucoseJournalDatabaseHelper(this);
+
         
         initializeControls();
+
+        refreshEntries();
     }
     
     private void initializeControls() {
@@ -85,7 +93,14 @@ public class GlucoseJournalActivity extends Activity {
     
     public void saveEntry(View view) {
     	JournalEntry entry = new JournalEntry(editAt.getText().toString(), editGlucose.getText().toString(), editCarbohydrates.getText().toString(), editDose.getText().toString());
-    	journalEntries.add(entry);
+
+    	dbHandler.addJournalEntry(entry);
+    	
+    	// Return focus to glucose field unless time was filled; only for new records.
+    	if (editAt.getText().toString().isEmpty())
+    		editGlucose.requestFocus();
+    	else
+    		editAt.requestFocus();
     	
     	editAt.setText("");
     	editGlucose.setText("");
@@ -100,6 +115,8 @@ public class GlucoseJournalActivity extends Activity {
     private void refreshEntries() {
     	LinearLayout list_entries = (LinearLayout) findViewById(R.id.list_entries);
     	list_entries.removeAllViews();
+    	
+    	journalEntries = dbHandler.getAllJournalEntries();
     	
     	for (JournalEntry entry : journalEntries) {
     		addRow(list_entries, entry.at.format("%H:%M"), entry.glucose, entry.carbohydrates, entry.dose);

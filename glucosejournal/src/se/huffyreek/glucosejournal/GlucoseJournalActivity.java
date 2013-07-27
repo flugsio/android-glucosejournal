@@ -72,7 +72,7 @@ public class GlucoseJournalActivity extends Activity {
     	
     	editAt.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
-				if(s.length() >= 4) {
+				if(s.length() >= 4 || (isInteger(s.toString()) && Integer.parseInt(s.toString()) > 236)) {
 					editGlucose.requestFocus();
 					editGlucose.selectAll();
 				}
@@ -83,8 +83,9 @@ public class GlucoseJournalActivity extends Activity {
     	
     	editGlucose.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
-				if(s.length() >= 4 || charAtIs(s, -2, '.')) {
+				if(s.length() >= 4 || charAtIs(s, -2, '.') || charAtIs(s, 0, '-')) {
 					editCarbohydrates.requestFocus();
+					editCarbohydrates.selectAll();
 				}
 			}
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -93,8 +94,9 @@ public class GlucoseJournalActivity extends Activity {
     	
     	editCarbohydrates.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
-				if(s.length() >= 3) {
+				if(s.length() >= 3 || charAtIs(s, 0, '-') || (isInteger(s.toString()) && Integer.parseInt(s.toString()) > 23)) {
 					editDose.requestFocus();
+					editDose.selectAll();
 				}
 			}
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -103,9 +105,10 @@ public class GlucoseJournalActivity extends Activity {
     	
     	editDose.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
-				if(s.length() >= 4 || charAtIs(s, -2, '.')) {
-					buttonSave.callOnClick();
-				}
+				if(editDose.isFocused()) // So that is doesn't autosave when going into Edit-mode
+					if(s.length() >= 4 || charAtIs(s, -2, '.')  || charAtIs(s, 0, '-')) {
+						buttonSave.callOnClick();
+					}
 			}
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 			public void onTextChanged(CharSequence s, int start, int before, int count) {}
@@ -313,5 +316,23 @@ public class GlucoseJournalActivity extends Activity {
     }
     private boolean charAtIs(Editable s, int position, char c) {
     	return charAtIs(s.toString(), position, c);
+    }
+    
+    public static boolean isInteger(String number) {
+    	try {
+    		Integer.parseInt(number);
+    		return true;
+    	} catch (NumberFormatException e) {
+    		return false;
+    	}
+    }
+    
+    public static boolean isFloat(String number) {
+    	try {
+    		Float.parseFloat(number);
+    		return true;
+    	} catch (NumberFormatException e) {
+    		return false;
+    	}
     }
 }

@@ -17,6 +17,7 @@ import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.format.Time;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -46,6 +47,11 @@ public class GlucoseJournalActivity extends Activity {
 	private EditText editDose;
 	private Button   buttonSave;
 	private GlucoseJournalDatabaseHelper dbHandler;
+	private GlucoseGraph glucoseGraph;
+	
+	private Handler handler = new Handler();
+	// How many seconds until entry gets 1px more height
+	private int entrySecondsPerPixel = 120;
 	
     /** Called when the activity is first created. */
     @Override
@@ -60,6 +66,13 @@ public class GlucoseJournalActivity extends Activity {
         initializeControls();
 
         refreshEntries();
+        // TODO: this runs in the background
+        handler.postDelayed(new Runnable() {
+			public void run() {
+				refreshEntries();
+				handler.postDelayed(this, entrySecondsPerPixel*1000);
+			}
+		}, entrySecondsPerPixel*1000);
     }
     
     private void initializeControls() {
@@ -69,6 +82,7 @@ public class GlucoseJournalActivity extends Activity {
     	editCarbohydrates = (EditText) findViewById(R.id.edit_carbohydrates);
     	editDose = (EditText) findViewById(R.id.edit_dose);
     	buttonSave = (Button) findViewById(R.id.button_save);
+    	glucoseGraph = (GlucoseGraph) findViewById(R.id.graph);
     	
     	editAt.addTextChangedListener(new TextWatcher() {
 			public void afterTextChanged(Editable s) {
@@ -113,6 +127,9 @@ public class GlucoseJournalActivity extends Activity {
 			public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 			public void onTextChanged(CharSequence s, int start, int before, int count) {}
     	});
+    	
+    	glucoseGraph.journalEntries = this.journalEntries;
+    	glucoseGraph.entrySecondsPerPixel = entrySecondsPerPixel;
     }
     
     public void saveEntry(View view) {
@@ -164,9 +181,22 @@ public class GlucoseJournalActivity extends Activity {
     	
     	journalEntries = dbHandler.getAllJournalEntries();
     	
+    	JournalEntryLinearLayout lastLayout = null;
+    	Time now = new Time();
+    	now.setToNow();
+    	now.set(now.toMillis(false)+120*60*1000);
+    	
+    	int accumulatedSpace = 0;
+    	
     	for (JournalEntry entry : journalEntries) {
-    		addRow(list_entries, entry.at.format("%H:%M"), entry.glucose, entry.carbohydrates, entry.dose);
+    		lastLayout = addRow(list_entries, entry, accumulatedSpace, now, entry.at.format("%H:%M"), entry.glucose, entry.carbohydrates, entry.dose, entry.id);
+    		accumulatedSpace += lastLayout.getPaddingTop() + 37; //lastLayout.getHeight();
     	}
+    	
+    	
+    	glucoseGraph.journalEntries = journalEntries;
+    	glucoseGraph.endTime = now.toMillis(false);
+    	glucoseGraph.invalidate();
     }
     
     private void createHeader() {
@@ -229,6 +259,10 @@ public class GlucoseJournalActivity extends Activity {
 			
 		}
 
+		if (entry != null) {
+			int top = Math.max(0, (int)((startTime.toMillis(false)-entry.at.toMillis(false)) / (entrySecondsPerPixel*1000)) - 20 - accumulatedSpace)/* - ll.getHeight() == 37*/;
+			ll.setPadding(0, top, 0, 0);
+		}
 		
 		TextView tv1 = new TextView(this);
 		tv1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);

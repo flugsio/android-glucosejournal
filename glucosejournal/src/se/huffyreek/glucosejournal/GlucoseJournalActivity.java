@@ -52,6 +52,12 @@ public class GlucoseJournalActivity extends Activity {
 	private Handler handler = new Handler();
 	// How many seconds until entry gets 1px more height
 	private int entrySecondsPerPixel = 120;
+	private Runnable updateGlucoseGraph = new Runnable() {
+	    public void run() {
+	        refreshEntries();
+	        handler.postDelayed(this, entrySecondsPerPixel*1000);
+	    }
+	};
 	
     /** Called when the activity is first created. */
     @Override
@@ -66,13 +72,20 @@ public class GlucoseJournalActivity extends Activity {
         initializeControls();
 
         refreshEntries();
-        // TODO: this runs in the background
-        handler.postDelayed(new Runnable() {
-			public void run() {
-				refreshEntries();
-				handler.postDelayed(this, entrySecondsPerPixel*1000);
-			}
-		}, entrySecondsPerPixel*1000);
+    }
+
+    @Override
+    public void onResume() {
+	super.onResume();
+    
+        handler.postDelayed(updateGlucoseGraph, entrySecondsPerPixel*1000);
+    }
+    
+    @Override
+    public void onPause() {
+	super.onPause();
+	
+        handler.removeCallbacks(updateGlucoseGraph);
     }
     
     private void initializeControls() {

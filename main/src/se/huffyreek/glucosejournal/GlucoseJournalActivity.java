@@ -158,7 +158,7 @@ public class GlucoseJournalActivity extends Activity {
         } else {
 
             JournalEntry entry = dbHandler.findJournalEntry(Integer.parseInt(editId.getText().toString()));
-            entry.update_at_time(editAt.getText().toString());
+            entry.setAt(editAt.getText().toString());
             entry.glucose = editGlucose.getText().toString();
             entry.carbohydrates = editCarbohydrates.getText().toString();
             entry.dose = editDose.getText().toString();

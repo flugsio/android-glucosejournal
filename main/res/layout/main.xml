@@ -16,7 +16,7 @@
             android:inputType="number"
             android:visibility="gone" />
                 
-        <EditText
+        <se.huffyreek.glucosejournal.AutoNextEditText
             android:id="@+id/edit_at"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -24,7 +24,7 @@
             android:inputType="time"
             android:hint="@string/edit_at" />
 
-        <EditText
+        <se.huffyreek.glucosejournal.AutoNextEditText
             android:id="@+id/edit_glucose"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -32,9 +32,9 @@
             android:inputType="numberDecimal|numberSigned"
             android:hint="@string/edit_glucose">
             <requestFocus />
-    	</EditText>
+    	</se.huffyreek.glucosejournal.AutoNextEditText>
 
-        <EditText
+        <se.huffyreek.glucosejournal.AutoNextEditText
             android:id="@+id/edit_carbohydrates"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
             android:inputType="number|numberSigned"
             android:hint="@string/edit_carbohydrates" />
 
-        <EditText
+        <se.huffyreek.glucosejournal.AutoNextEditText
             android:id="@+id/edit_dose"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

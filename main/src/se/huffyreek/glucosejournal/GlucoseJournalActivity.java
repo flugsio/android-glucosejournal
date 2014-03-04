@@ -41,10 +41,10 @@ public class GlucoseJournalActivity extends Activity {
 
     private List<JournalEntry> journalEntries;
     private EditText editId;
-    private EditText editAt;
-    private EditText editGlucose;
-    private EditText editCarbohydrates;
-    private EditText editDose;
+    private AutoNextEditText editAt;
+    private AutoNextEditText editGlucose;
+    private AutoNextEditText editCarbohydrates;
+    private AutoNextEditText editDose;
     private Button   buttonSave;
     private GlucoseJournalDatabaseHelper dbHandler;
     private GlucoseGraph glucoseGraph;
@@ -89,56 +89,30 @@ public class GlucoseJournalActivity extends Activity {
 
     private void initializeControls() {
         editId = (EditText) findViewById(R.id.edit_id);
-        editAt = (EditText) findViewById(R.id.edit_at);
-        editGlucose = (EditText) findViewById(R.id.edit_glucose);
-        editCarbohydrates = (EditText) findViewById(R.id.edit_carbohydrates);
-        editDose = (EditText) findViewById(R.id.edit_dose);
+        editAt = (AutoNextEditText) findViewById(R.id.edit_at);
+        editGlucose = (AutoNextEditText) findViewById(R.id.edit_glucose);
+        editCarbohydrates = (AutoNextEditText) findViewById(R.id.edit_carbohydrates);
+        editDose = (AutoNextEditText) findViewById(R.id.edit_dose);
         buttonSave = (Button) findViewById(R.id.button_save);
         glucoseGraph = (GlucoseGraph) findViewById(R.id.graph);
 
-        editAt.addTextChangedListener(new TextWatcher() {
-            public void afterTextChanged(Editable s) {
-                if(s.length() >= 4 || (isInteger(s.toString()) && Integer.parseInt(s.toString()) > 236)) {
-                    editGlucose.requestFocus();
-                    editGlucose.selectAll();
-                }
-            }
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-        });
+        editAt.nextIfLength = 4;
+        editAt.nextIfGreaterThan = 236;
 
-        editGlucose.addTextChangedListener(new TextWatcher() {
-            public void afterTextChanged(Editable s) {
-                if(s.length() >= 4 || charAtIs(s, -2, '.') || charAtIs(s, 0, '-')) {
-                    editCarbohydrates.requestFocus();
-                    editCarbohydrates.selectAll();
-                }
-            }
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-        });
+        editGlucose.nextIfLength = 4;
+        editGlucose.nextIfDecimals = 1;
+        editCarbohydrates.nextIfEqual = "-";
+        //editCarbohydrates.nextIfEqual = "0";
 
-        editCarbohydrates.addTextChangedListener(new TextWatcher() {
-            public void afterTextChanged(Editable s) {
-                if(s.length() >= 3 || charAtIs(s, 0, '-') || (isInteger(s.toString()) && Integer.parseInt(s.toString()) > 23)) {
-                    editDose.requestFocus();
-                    editDose.selectAll();
-                }
-            }
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-        });
+        editCarbohydrates.nextIfLength = 3;
+        editCarbohydrates.nextIfEqual = "-";
+        //editCarbohydrates.nextIfEqual = "0";
+        editCarbohydrates.nextIfGreaterThan = 23;
 
-        editDose.addTextChangedListener(new TextWatcher() {
-            public void afterTextChanged(Editable s) {
-                if(editDose.isFocused()) // So that is doesn't autosave when going into Edit-mode
-                    if(s.length() >= 4 || charAtIs(s, -2, '.')  || charAtIs(s, 0, '-')) {
-                        buttonSave.callOnClick();
-                    }
-            }
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
-        });
+        editDose.nextIfLength = 4;
+        editDose.nextIfDecimals = 1;
+        editDose.nextIfEqual = "-";
+        //editDose.nextIfEqual = "0";
 
         glucoseGraph.journalEntries = this.journalEntries;
         glucoseGraph.entrySecondsPerPixel = entrySecondsPerPixel;
@@ -350,7 +324,7 @@ public class GlucoseJournalActivity extends Activity {
     // Missing framework function, to easily check if char is in string at a position.
     // Position can of course be negative, -1 equals last char and -2 is next to last.
     // No exceptions, just true or false. Index out of boundaries will return false.
-    private boolean charAtIs(String s, int position, char c) {
+    protected static boolean charAtIs(String s, int position, char c) {
         if(position < 0) {
             position = s.length() - (position * -1);
         }
@@ -360,7 +334,7 @@ public class GlucoseJournalActivity extends Activity {
             return s.charAt(position) == c;
         }
     }
-    private boolean charAtIs(Editable s, int position, char c) {
+    protected static boolean charAtIs(Editable s, int position, char c) {
         return charAtIs(s.toString(), position, c);
     }
 

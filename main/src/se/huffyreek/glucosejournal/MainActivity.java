@@ -36,8 +36,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class GlucoseJournalActivity extends Activity {
-    private static final String TAG = "GlucoseJournalActivity";
+public class MainActivity extends Activity {
+    private static final String TAG = "MainActivity";
 
     private List<JournalEntry> journalEntries;
     private EditText editId;

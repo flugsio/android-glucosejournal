@@ -41,8 +41,8 @@ class AutoNextEditText extends EditText {
         addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
                 if((nextIfLength != null && s.length() >= nextIfLength) ||
-                   (nextIfGreaterThan != null && (GlucoseJournalActivity.isInteger(s.toString()) && Integer.parseInt(s.toString()) > nextIfGreaterThan)) ||
-                   (nextIfDecimals != null && GlucoseJournalActivity.charAtIs(s, nextIfDecimals*-1-1, '.')) ||
+                   (nextIfGreaterThan != null && (MainActivity.isInteger(s.toString()) && Integer.parseInt(s.toString()) > nextIfGreaterThan)) ||
+                   (nextIfDecimals != null && MainActivity.charAtIs(s, nextIfDecimals*-1-1, '.')) ||
                    (nextIfEqual != null && nextIfEqual == s.toString())) {
                     activateNextView();
                 }

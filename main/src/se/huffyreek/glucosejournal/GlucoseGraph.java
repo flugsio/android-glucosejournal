@@ -100,7 +100,7 @@ public class GlucoseGraph extends View {
     }
 
     private Integer calculateX(JournalEntry entry) {
-        return glucoseToX(GlucoseJournalActivity.isFloat(entry.glucose) ? Float.parseFloat(entry.glucose) : 0);
+        return glucoseToX(MainActivity.isFloat(entry.glucose) ? Float.parseFloat(entry.glucose) : 0);
     }
 
     private Integer calculateY(JournalEntry entry) {
@@ -110,7 +110,7 @@ public class GlucoseGraph extends View {
     private void drawGlucosePoint(Canvas canvas, JournalEntry entry) {
         int x = calculateX(entry);
         int y = calculateY(entry);
-        if (GlucoseJournalActivity.isFloat(entry.glucose) && Float.parseFloat(entry.glucose) >= valueLow && Float.parseFloat(entry.glucose) <= valueGood) {
+        if (MainActivity.isFloat(entry.glucose) && Float.parseFloat(entry.glucose) >= valueLow && Float.parseFloat(entry.glucose) <= valueGood) {
             canvas.drawCircle(x, y, 6, glucosePointGood);
             canvas.drawCircle(x, y, 5, glucosePointFillGood);
         } else {

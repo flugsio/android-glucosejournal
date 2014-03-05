@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, GlucoseJournalActivity!</string>
     <string name="app_name">Glucose Journal</string>
     <string name="edit_at">Time</string>
     <string name="edit_glucose">Glucose</string>

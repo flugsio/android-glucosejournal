@@ -36,6 +36,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import android.view.Menu;
+
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
 
@@ -52,6 +54,7 @@ public class MainActivity extends Activity {
     private Handler handler = new Handler();
     // How many seconds until entry gets 1px more height
     private int entrySecondsPerPixel = 120;
+    private int daysDisplayed = 7;
     private Runnable updateGlucoseGraph = new Runnable() {
         public void run() {
             refreshEntries();
@@ -165,7 +168,7 @@ public class MainActivity extends Activity {
         LinearLayout list_entries = (LinearLayout) findViewById(R.id.list_entries);
         list_entries.removeAllViews();
 
-        journalEntries = dbHandler.getAllJournalEntries();
+        journalEntries = dbHandler.getAllJournalEntries(daysAgoInMillis(daysDisplayed));
 
         JournalEntryLinearLayout lastLayout = null;
         Time now = new Time();
@@ -284,6 +287,15 @@ public class MainActivity extends Activity {
         return ll;
     }
 
+    private void toggle_days_displayed() {
+        if (daysDisplayed == 7) {
+            daysDisplayed = 90;
+        } else {
+            daysDisplayed = 7;
+        }
+        refreshEntries();
+    }
+
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
                                     ContextMenuInfo menuInfo) {
@@ -320,6 +332,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_activity_actions, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_toggle_days_displayed:
+                toggle_days_displayed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     // Missing framework function, to easily check if char is in string at a position.
     // Position can of course be negative, -1 equals last char and -2 is next to last.
@@ -354,5 +383,12 @@ public class MainActivity extends Activity {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    private static long daysAgoInMillis(int days) {
+        long DAY_IN_MS = 1000 * 60 * 60 * 24;
+        Time now = new Time();
+        now.setToNow();
+        return now.toMillis(false) - (days * DAY_IN_MS);
     }
 }

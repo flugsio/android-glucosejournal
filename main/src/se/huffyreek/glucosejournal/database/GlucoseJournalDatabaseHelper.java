@@ -78,10 +78,13 @@ public class GlucoseJournalDatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Getting all journal entries
-    public List<JournalEntry> getAllJournalEntries() {
+    public List<JournalEntry> getAllJournalEntries(long after_at) {
         List<JournalEntry> journalEntries = new ArrayList<JournalEntry>();
         // Select All Query
-        String selectQuery = "SELECT  * FROM " + JournalEntryTable.TABLE_JOURNALENTRY + " ORDER BY + " + JournalEntryTable.COLUMN_AT + " DESC LIMIT 30";
+        String selectQuery =
+            "SELECT * FROM " + JournalEntryTable.TABLE_JOURNALENTRY +
+            " WHERE " + JournalEntryTable.COLUMN_AT + " > " + after_at +
+            " ORDER BY " + JournalEntryTable.COLUMN_AT + " DESC ";
 
         // TODO: writable really needed?
         SQLiteDatabase db = this.getWritableDatabase();

@@ -10,11 +10,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.Cursor;
 
 import se.huffyreek.glucosejournal.JournalEntry;
+import se.huffyreek.glucosejournal.InfusionChange;
 
 public class GlucoseJournalDatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "glucosejournal.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public GlucoseJournalDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -23,12 +24,14 @@ public class GlucoseJournalDatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase database) {
         JournalEntryTable.onCreate(database);
+        InfusionChangeTable.onCreate(database);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion,
             int newVersion) {
         JournalEntryTable.onUpgrade(database, oldVersion, newVersion);
+        InfusionChangeTable.onUpgrade(database, oldVersion, newVersion);
     }
 
     // Adding new journal entry
@@ -93,11 +96,9 @@ public class GlucoseJournalDatabaseHelper extends SQLiteOpenHelper {
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                android.text.format.Time time = new android.text.format.Time();
                 JournalEntry journalEntry = new JournalEntry();
                 journalEntry.id = Integer.parseInt(cursor.getString(0));
-                time.set(cursor.getLong(1));
-                journalEntry.at = time;
+                journalEntry.at = timeFromLong(cursor.getLong(1));
                 journalEntry.glucose = cursor.getString(2);
                 journalEntry.carbohydrates = cursor.getString(3);
                 journalEntry.dose = cursor.getString(4);
@@ -109,5 +110,40 @@ public class GlucoseJournalDatabaseHelper extends SQLiteOpenHelper {
         db.close(); // needed? was not included in example
         // return contact list
         return journalEntries;
+    }
+
+
+    // Adding new infusion change
+    public void addInfusionChange(InfusionChange infusionChange) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.insert(InfusionChangeTable.TABLE_INFUSIONCHANGE, null, InfusionChangeTable.contentValues(infusionChange));
+        db.close();
+    }
+
+    public InfusionChange findLatestInfusionChange() {
+        InfusionChange infusionChange = null;
+        String selectQuery = "SELECT * FROM " + InfusionChangeTable.TABLE_INFUSIONCHANGE + " ORDER BY " + InfusionChangeTable.COLUMN_AT + " DESC LIMIT 1";
+
+        // TODO: writable really needed?
+        SQLiteDatabase db = this.getWritableDatabase();
+        Cursor cursor = db.rawQuery(selectQuery, null);
+
+        // looping through all rows and adding to list
+        if (cursor.moveToFirst()) {
+            infusionChange = new InfusionChange();
+            infusionChange.id = Integer.parseInt(cursor.getString(0));
+            infusionChange.at = timeFromLong(cursor.getLong(1));
+            infusionChange.units = cursor.getString(2);
+        }
+
+        db.close(); // needed? was not included in example
+        // return contact list
+        return infusionChange;
+    }
+
+    private android.text.format.Time timeFromLong(long longTime) {
+        android.text.format.Time time = new android.text.format.Time();
+        time.set(longTime);
+        return time;
     }
 }

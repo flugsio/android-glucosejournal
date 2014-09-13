@@ -1,5 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:id="@+id/action_toggle_days_displayed"
         android:title="@string/action_toggle_days_displayed" />
+    <item android:id="@+id/action_infusion_changed"
+        android:title="@string/action_infusion_changed" />
 </menu>
 

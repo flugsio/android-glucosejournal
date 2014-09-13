@@ -13,5 +13,6 @@
     <string name="change_date_menu_button">Change Date</string>
     <string name="delete_menu_button">Delete</string>
     <string name="action_toggle_days_displayed">1 Week / 3 Months</string>
+    <string name="action_infusion_changed">Infusion Changed</string>
 
 </resources>

@@ -50,6 +50,7 @@ public class MainActivity extends Activity {
     private Button   buttonSave;
     private GlucoseJournalDatabaseHelper dbHandler;
     private GlucoseGraph glucoseGraph;
+    private TextView textViewInfusionChange;
 
     private Handler handler = new Handler();
     // How many seconds until entry gets 1px more height
@@ -57,7 +58,7 @@ public class MainActivity extends Activity {
     private int daysDisplayed = 7;
     private Runnable updateGlucoseGraph = new Runnable() {
         public void run() {
-            refreshEntries();
+            refreshAll();
             handler.postDelayed(this, entrySecondsPerPixel*1000);
         }
     };
@@ -73,7 +74,7 @@ public class MainActivity extends Activity {
 
         initializeControls();
 
-        refreshEntries();
+        refreshAll();
     }
 
     @Override
@@ -164,6 +165,11 @@ public class MainActivity extends Activity {
         editDose.setText(entry.dose);
     }
 
+    private void refreshAll() {
+        refreshEntries();
+        refreshInfusionChange();
+    }
+
     private void refreshEntries() {
         LinearLayout list_entries = (LinearLayout) findViewById(R.id.list_entries);
         list_entries.removeAllViews();
@@ -187,6 +193,16 @@ public class MainActivity extends Activity {
         glucoseGraph.endTime = now.toMillis(false);
         glucoseGraph.invalidate();
     }
+
+    // temporary while evaluating usefulness, if so put in graph
+    private void refreshInfusionChange() {
+        InfusionChange infusionChange = dbHandler.findLatestInfusionChange();
+        if (infusionChange != null) {
+            textViewInfusionChange.setText(Integer.toString(infusionChange.hoursAgo()));
+            textViewInfusionChange.setTextColor(infusionChange.colorPresentation());
+        }
+    }
+
 
     private void createHeader() {
         DisplayMetrics metrics = new DisplayMetrics();
@@ -219,10 +235,17 @@ public class MainActivity extends Activity {
         tv4.setText("Dose");
         tv4.setGravity(Gravity.RIGHT);
 
+        textViewInfusionChange = new TextView(this);
+        textViewInfusionChange.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        textViewInfusionChange.setWidth((int)(metrics.widthPixels * 0.30));
+        textViewInfusionChange.setText("_");
+        textViewInfusionChange.setGravity(Gravity.RIGHT);
+
         ll.addView(tv1);
         ll.addView(tv2);
         ll.addView(tv3);
         ll.addView(tv4);
+        ll.addView(textViewInfusionChange);
 
         ((LinearLayout) findViewById(R.id.list_entries_header)).addView(ll);
     }
@@ -287,6 +310,21 @@ public class MainActivity extends Activity {
         return ll;
     }
 
+    private void createInfusionChange() {
+        String time = "";
+        // if not editing and time is entered
+        if (editId.getText().toString().isEmpty() &&
+                !editAt.getText().toString().isEmpty()) {
+            time = editAt.getText().toString();
+            editAt.setText("");
+            editGlucose.requestFocus();
+        }
+        InfusionChange infusionChange = new InfusionChange(time, "");
+
+        dbHandler.addInfusionChange(infusionChange);
+        refreshInfusionChange();
+    }
+
     private void toggle_days_displayed() {
         if (daysDisplayed == 7) {
             daysDisplayed = 90;
@@ -344,6 +382,9 @@ public class MainActivity extends Activity {
         switch (item.getItemId()) {
             case R.id.action_toggle_days_displayed:
                 toggle_days_displayed();
+                return true;
+            case R.id.action_infusion_changed:
+                createInfusionChange();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

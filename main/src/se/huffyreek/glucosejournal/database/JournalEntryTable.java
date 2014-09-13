@@ -20,7 +20,7 @@ public class JournalEntryTable {
 
     private static final String TABLE_CREATE = "create table "
         + TABLE_JOURNALENTRY
-        + "(" 
+        + "("
         + COLUMN_ID + " integer primary key autoincrement, "
         + COLUMN_AT + " integer not null, "
         + COLUMN_GLUCOSE + " real not null,"
@@ -34,11 +34,15 @@ public class JournalEntryTable {
 
     public static void onUpgrade(SQLiteDatabase database, int oldVersion,
             int newVersion) {
-        Log.w(JournalEntryTable.class.getName(), "Upgrading database from version "
-                + oldVersion + " to " + newVersion
-                + ", which will destroy all old data");
-        database.execSQL("DROP TABLE IF EXISTS " + TABLE_JOURNALENTRY);
-        onCreate(database);
+        if (oldVersion == 1 && newVersion == 2) {
+            // nothing to do
+        } else {
+            Log.w(JournalEntryTable.class.getName(), "Upgrading database from version "
+                    + oldVersion + " to " + newVersion
+                    + ", which will destroy all old data");
+            database.execSQL("DROP TABLE IF EXISTS " + TABLE_JOURNALENTRY);
+            onCreate(database);
+        }
     }
 
     public static ContentValues contentValues(JournalEntry journalEntry) {

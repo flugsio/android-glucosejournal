@@ -72,10 +72,12 @@ public class GlucoseGraph extends View {
         if (journalEntries != null) {
 
             for (JournalEntry entry : journalEntries) {
-                if (lastEntry != null) {
-                    canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
+                if (!entry.glucose.isEmpty()) {
+                    if (lastEntry != null) {
+                        canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
+                    }
+                    lastEntry = entry;
                 }
-                lastEntry = entry;
             }
 
             for (JournalEntry entry : journalEntries) {

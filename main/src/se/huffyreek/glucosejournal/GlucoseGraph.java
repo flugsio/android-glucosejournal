@@ -13,6 +13,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import android.text.format.Time;
+
 public class GlucoseGraph extends View {
     private static final String TAG = "GlucoseJournal.GlucoseGraph";
     Paint redPaint = new Paint();
@@ -21,6 +23,7 @@ public class GlucoseGraph extends View {
     Paint glucosePointGood = new Paint();
     Paint glucosePointFillGood = new Paint();
     Paint lines = new Paint();
+    Paint dateFont = new Paint();
     public List<JournalEntry> journalEntries;
     public int entrySecondsPerPixel = 120;
     public long endTime;
@@ -49,6 +52,9 @@ public class GlucoseGraph extends View {
         glucosePointFillGood.setStyle(Style.FILL);
 
         lines.setColor(Color.GRAY);
+
+        dateFont.setColor(Color.GRAY);
+        dateFont.setTextSize(16);
     }
 
     @Override
@@ -69,6 +75,8 @@ public class GlucoseGraph extends View {
         canvas.drawLine(glucoseToX(valueGood), 0, glucoseToX(valueGood), h, lines);
         canvas.drawLine(glucoseToX(valueHigh), 0, glucoseToX(valueHigh), h, lines);
 
+        drawDays(canvas);
+
         if (journalEntries != null) {
 
             for (JournalEntry entry : journalEntries) {
@@ -82,6 +90,26 @@ public class GlucoseGraph extends View {
 
             for (JournalEntry entry : journalEntries) {
                 drawGlucosePoint(canvas, entry);
+            }
+        }
+    }
+
+    private void drawDays(Canvas canvas) {
+        if (!journalEntries.isEmpty()) {
+            Time firstDay = millisToStartOfDay(
+                    journalEntries.get(0).at.toMillis(false));
+            Time lastDay = millisToStartOfDay(
+                journalEntries.get(journalEntries.size()-1).at.toMillis(false));
+
+            while (firstDay.toMillis(false) >= lastDay.toMillis(false)) {
+                int y = (int)((endTime-firstDay.toMillis(false))/((long)entrySecondsPerPixel*1000));
+                canvas.drawLine(5, y, w, y, lines);
+                canvas.drawText(firstDay.format("%Y  %m-%d"), 12, y-6, dateFont);
+
+                // firstDay.monthDay -= 1; // doesn't change month/year
+                // TODO: manual set() doesn't handle daylight saving time
+                // TODO: (maybe) render DST changes?
+                firstDay.set(firstDay.toMillis(false)-24*60*60*1000);
             }
         }
     }
@@ -119,5 +147,12 @@ public class GlucoseGraph extends View {
             canvas.drawCircle(x, y, 6, glucosePoint);
             canvas.drawCircle(x, y, 5, glucosePointFill);
         }
+    }
+
+    private Time millisToStartOfDay(long millis) {
+        Time time = new Time();
+        time.set(millis);
+        time.set(time.monthDay, time.month, time.year);
+        return time;
     }
 }

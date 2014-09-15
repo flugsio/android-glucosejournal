@@ -35,6 +35,7 @@ public class GlucoseGraph extends View {
     private float valueGood = 10.0f;
     private float valueHigh = 15.0f;
     public int futureRange = 120*60;
+    public int[] hourLines = {4, 8, 12, 16, 20};
 
 
     public GlucoseGraph(Context context, AttributeSet attrs) {
@@ -94,6 +95,7 @@ public class GlucoseGraph extends View {
         }
     }
 
+    // Draws dates and hour markers for 6/12/18 with horizontal lines
     private void drawDays(Canvas canvas) {
         if (!journalEntries.isEmpty()) {
             Time firstDay = millisToStartOfDay(
@@ -101,10 +103,23 @@ public class GlucoseGraph extends View {
             Time lastDay = millisToStartOfDay(
                 journalEntries.get(journalEntries.size()-1).at.toMillis(false));
 
+            int xHigh = glucoseToX(valueHigh);
+
             while (firstDay.toMillis(false) >= lastDay.toMillis(false)) {
-                int y = (int)((endTime-firstDay.toMillis(false))/((long)entrySecondsPerPixel*1000));
-                canvas.drawLine(5, y, w, y, lines);
+                long millisStart = firstDay.toMillis(false);
+                int y = timeToY(millisStart);
+                canvas.drawLine(8, y, w, y, lines);
                 canvas.drawText(firstDay.format("%Y  %m-%d"), 12, y-6, dateFont);
+
+                for (int hour : hourLines) {
+                    if (hour == 12) {
+                        // draw from 25 to center xHigh, and then same length after
+                        drawHour(canvas, millisStart, hour, 25, (xHigh-25)*2+25+1);
+                    } else {
+                        // draw from 25 and stop at crossing line at xHigh
+                        drawHour(canvas, millisStart, hour, 25, xHigh);
+                    }
+                }
 
                 // firstDay.monthDay -= 1; // doesn't change month/year
                 // TODO: manual set() doesn't handle daylight saving time
@@ -112,6 +127,12 @@ public class GlucoseGraph extends View {
                 firstDay.set(firstDay.toMillis(false)-24*60*60*1000);
             }
         }
+    }
+
+    private void drawHour(Canvas canvas, long millisStart, int hour, float startX, float stopX) {
+        int y = timeToY(millisStart+hour*60*60*1000);
+        canvas.drawText(String.format("%02d", hour), 4, y+5, dateFont);
+        canvas.drawLine(startX, y, stopX, y, lines);
     }
 
     private float[] calculateAllLocations() {
@@ -134,7 +155,11 @@ public class GlucoseGraph extends View {
     }
 
     private Integer calculateY(JournalEntry entry) {
-        return (int)((endTime-entry.at.toMillis(false))/(entrySecondsPerPixel*1000));
+        return timeToY(entry.at.toMillis(false));
+    }
+
+    private Integer timeToY(long millis) {
+        return (int)((endTime-millis)/((long)entrySecondsPerPixel*1000));
     }
 
     private void drawGlucosePoint(Canvas canvas, JournalEntry entry) {

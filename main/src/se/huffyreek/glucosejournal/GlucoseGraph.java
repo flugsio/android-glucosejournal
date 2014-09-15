@@ -98,8 +98,7 @@ public class GlucoseGraph extends View {
     // Draws dates and hour markers for 6/12/18 with horizontal lines
     private void drawDays(Canvas canvas) {
         if (!journalEntries.isEmpty()) {
-            Time firstDay = millisToStartOfDay(
-                    journalEntries.get(0).at.toMillis(false));
+            Time firstDay = millisToStartOfDay(endTime);
             Time lastDay = millisToStartOfDay(
                 journalEntries.get(journalEntries.size()-1).at.toMillis(false));
 

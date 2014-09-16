@@ -9,6 +9,9 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Point;
+import android.graphics.RectF;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +27,8 @@ public class GlucoseGraph extends View {
     Paint glucosePointFillGood = new Paint();
     Paint lines = new Paint();
     Paint dateFont = new Paint();
+    Paint timeFont = new Paint();
+    Paint timeBackground = new Paint();
     public List<JournalEntry> journalEntries;
     public int entrySecondsPerPixel = 120;
     public long endTime;
@@ -56,6 +61,11 @@ public class GlucoseGraph extends View {
 
         dateFont.setColor(Color.GRAY);
         dateFont.setTextSize(16);
+
+        timeFont.setColor(Color.rgb(160, 160, 255));
+        timeFont.setTextSize(16);
+
+        timeBackground.setColor(Color.rgb(21, 34, 44));
     }
 
     @Override
@@ -67,7 +77,6 @@ public class GlucoseGraph extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        JournalEntry lastEntry = null;
         super.onDraw(canvas);
 
         canvas.drawLine(0, futureRange/entrySecondsPerPixel, w, futureRange/entrySecondsPerPixel, lines);
@@ -77,22 +86,8 @@ public class GlucoseGraph extends View {
         canvas.drawLine(glucoseToX(valueHigh), 0, glucoseToX(valueHigh), h, lines);
 
         drawDays(canvas);
+        drawJournalEntries(canvas);
 
-        if (journalEntries != null) {
-
-            for (JournalEntry entry : journalEntries) {
-                if (!entry.glucose.isEmpty()) {
-                    if (lastEntry != null) {
-                        canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
-                    }
-                    lastEntry = entry;
-                }
-            }
-
-            for (JournalEntry entry : journalEntries) {
-                drawGlucosePoint(canvas, entry);
-            }
-        }
     }
 
     // Draws dates and hour markers for 6/12/18 with horizontal lines
@@ -128,10 +123,36 @@ public class GlucoseGraph extends View {
         }
     }
 
+    private void drawJournalEntries(Canvas canvas) {
+        JournalEntry lastEntry = null;
+        if (journalEntries != null) {
+
+            for (JournalEntry entry : journalEntries) {
+                if (!entry.glucose.isEmpty()) {
+                    drawTime(canvas, entry.at);
+                    if (lastEntry != null) {
+                        canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
+                    }
+                    lastEntry = entry;
+                }
+            }
+
+            for (JournalEntry entry : journalEntries) {
+                drawGlucosePoint(canvas, entry);
+            }
+        }
+    }
+
     private void drawHour(Canvas canvas, long millisStart, int hour, float startX, float stopX) {
         int y = timeToY(millisStart+hour*60*60*1000);
         canvas.drawText(String.format("%02d", hour), 4, y+5, dateFont);
         canvas.drawLine(startX, y, stopX, y, lines);
+    }
+
+    private void drawTime(Canvas canvas, Time time) {
+        int y = timeToY(time.toMillis(false));
+        canvas.drawRoundRect(new RectF(2, y-9, 46, y+8), 5, 5, timeBackground);
+        canvas.drawText(String.format("%02d:%02d", time.hour, time.minute), 4, y+5, timeFont);
     }
 
     private float[] calculateAllLocations() {

@@ -12,6 +12,7 @@
         <activity
             android:name=".MainActivity"
             android:label="@string/activity_name"
+            android:theme="@android:style/Theme.Holo"
             android:windowSoftInputMode="stateAlwaysVisible" >
             <intent-filter android:label="@string/app_launcher_name">
                 <action android:name="android.intent.action.MAIN" />

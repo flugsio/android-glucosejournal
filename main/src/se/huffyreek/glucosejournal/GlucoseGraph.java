@@ -20,17 +20,19 @@ import android.text.format.Time;
 
 public class GlucoseGraph extends View {
     private static final String TAG = "GlucoseJournal.GlucoseGraph";
+    private static final int HOURS_IN_MILLIS = 60*60*1000;
+    private static final int MINS_IN_MILLIS = 60*1000;
     Paint redPaint = new Paint();
     Paint glucosePoint = new Paint();
     Paint glucosePointFill = new Paint();
     Paint glucosePointGood = new Paint();
     Paint glucosePointFillGood = new Paint();
-    Paint lines = new Paint();
+    Paint gridPaint = new Paint();
     Paint dateFont = new Paint();
     Paint timeFont = new Paint();
     Paint timeBackground = new Paint();
     public List<JournalEntry> journalEntries;
-    public int entrySecondsPerPixel = 120;
+    public int millisPerPixel = 2*MINS_IN_MILLIS;
     public long endTime;
     private int w;
     private int h;
@@ -39,7 +41,7 @@ public class GlucoseGraph extends View {
     private float valueLow = 3.6f;
     private float valueGood = 10.0f;
     private float valueHigh = 15.0f;
-    public int futureRange = 120*60;
+    public int futureRange = 2 * HOURS_IN_MILLIS;
     public int[] hourLines = {4, 8, 12, 16, 20};
 
 
@@ -57,7 +59,7 @@ public class GlucoseGraph extends View {
         glucosePointFillGood.setColor(Color.rgb(100, 255, 100));
         glucosePointFillGood.setStyle(Style.FILL);
 
-        lines.setColor(Color.GRAY);
+        gridPaint.setColor(Color.GRAY);
 
         dateFont.setColor(Color.GRAY);
         dateFont.setTextSize(16);
@@ -79,11 +81,15 @@ public class GlucoseGraph extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        canvas.drawLine(0, futureRange/entrySecondsPerPixel, w, futureRange/entrySecondsPerPixel, lines);
+        int xLow = glucoseToX(valueGood);
+        int xGood = glucoseToX(valueGood);
+        int xHigh = glucoseToX(valueHigh);
 
-        canvas.drawLine(glucoseToX(valueLow), 0, glucoseToX(valueLow), h, lines);
-        canvas.drawLine(glucoseToX(valueGood), 0, glucoseToX(valueGood), h, lines);
-        canvas.drawLine(glucoseToX(valueHigh), 0, glucoseToX(valueHigh), h, lines);
+        canvas.drawLine(0, futureRange/millisPerPixel, w, futureRange/millisPerPixel, gridPaint);
+
+        canvas.drawLine(xLow, 0, xLow, h, gridPaint);
+        canvas.drawLine(xGood, 0, xGood, h, gridPaint);
+        canvas.drawLine(xHigh, 0, xHigh, h, gridPaint);
 
         drawDays(canvas);
         drawJournalEntries(canvas);
@@ -102,7 +108,7 @@ public class GlucoseGraph extends View {
             while (firstDay.toMillis(false) >= lastDay.toMillis(false)) {
                 long millisStart = firstDay.toMillis(false);
                 int y = timeToY(millisStart);
-                canvas.drawLine(8, y, w, y, lines);
+                canvas.drawLine(8, y, w, y, gridPaint);
                 canvas.drawText(firstDay.format("%Y  %m-%d"), 12, y-6, dateFont);
 
                 for (int hour : hourLines) {
@@ -146,7 +152,7 @@ public class GlucoseGraph extends View {
     private void drawHour(Canvas canvas, long millisStart, int hour, float startX, float stopX) {
         int y = timeToY(millisStart+hour*60*60*1000);
         canvas.drawText(String.format("%02d", hour), 4, y+5, dateFont);
-        canvas.drawLine(startX, y, stopX, y, lines);
+        canvas.drawLine(startX, y, stopX, y, gridPaint);
     }
 
     private void drawTime(Canvas canvas, Time time) {
@@ -179,7 +185,7 @@ public class GlucoseGraph extends View {
     }
 
     private Integer timeToY(long millis) {
-        return (int)((endTime-millis)/((long)entrySecondsPerPixel*1000));
+        return (int)((endTime-millis)/((long)millisPerPixel));
     }
 
     private void drawGlucosePoint(Canvas canvas, JournalEntry entry) {

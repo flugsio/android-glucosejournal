@@ -53,13 +53,12 @@ public class MainActivity extends Activity {
     private TextView textViewInfusionChange;
 
     private Handler handler = new Handler();
-    // How many seconds until entry gets 1px more height
-    private int entrySecondsPerPixel = 120;
+    private int millisPerPixel = 2*60*1000;
     private int daysDisplayed = 7;
     private Runnable updateGlucoseGraph = new Runnable() {
         public void run() {
             refreshAll();
-            handler.postDelayed(this, entrySecondsPerPixel*1000);
+            handler.postDelayed(this, millisPerPixel);
         }
     };
 
@@ -81,7 +80,7 @@ public class MainActivity extends Activity {
     public void onResume() {
     super.onResume();
 
-        handler.postDelayed(updateGlucoseGraph, entrySecondsPerPixel*1000);
+        handler.postDelayed(updateGlucoseGraph, millisPerPixel);
     }
 
     @Override
@@ -119,7 +118,7 @@ public class MainActivity extends Activity {
         //editDose.nextIfEqual = "0";
 
         glucoseGraph.journalEntries = this.journalEntries;
-        glucoseGraph.entrySecondsPerPixel = entrySecondsPerPixel;
+        glucoseGraph.millisPerPixel = millisPerPixel;
     }
 
     public void saveEntry(View view) {
@@ -272,7 +271,7 @@ public class MainActivity extends Activity {
         }
 
         if (entry != null) {
-            int top = Math.max(0, (int)((startTime.toMillis(false)-entry.at.toMillis(false)) / (entrySecondsPerPixel*1000)) - 20 - accumulatedSpace)/* - ll.getHeight() == 37*/;
+            int top = Math.max(0, (int)((startTime.toMillis(false)-entry.at.toMillis(false)) / (millisPerPixel)) - 20 - accumulatedSpace)/* - ll.getHeight() == 37*/;
             ll.setPadding(0, top, 0, 0);
         }
 

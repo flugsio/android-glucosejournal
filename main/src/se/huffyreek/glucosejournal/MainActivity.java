@@ -117,7 +117,6 @@ public class MainActivity extends Activity {
         editDose.nextIfEqual = "-";
         //editDose.nextIfEqual = "0";
 
-        glucoseGraph.journalEntries = this.journalEntries;
         glucoseGraph.millisPerPixel = millisPerPixel;
     }
 
@@ -178,7 +177,7 @@ public class MainActivity extends Activity {
         JournalEntryLinearLayout lastLayout = null;
         Time now = new Time();
         now.setToNow();
-        now.set(now.toMillis(false)+120*60*1000);
+        now.set(now.toMillis(false)+glucoseGraph.futureRange);
 
         int accumulatedSpace = 0;
 
@@ -189,7 +188,14 @@ public class MainActivity extends Activity {
 
 
         glucoseGraph.journalEntries = journalEntries;
-        glucoseGraph.endTime = now.toMillis(false);
+        glucoseGraph.topTime = now.toMillis(false);
+        // set bottomTime to lastEntry or 24 hours ago
+        if (journalEntries != null && !journalEntries.isEmpty()) {
+            glucoseGraph.bottomTime =
+                journalEntries.get(journalEntries.size()-1).at.toMillis(false);
+        } else {
+            glucoseGraph.bottomTime = glucoseGraph.topTime + 24*60*60*1000;
+        }
         glucoseGraph.invalidate();
     }
 

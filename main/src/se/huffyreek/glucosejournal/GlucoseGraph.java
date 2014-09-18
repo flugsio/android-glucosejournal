@@ -33,7 +33,8 @@ public class GlucoseGraph extends View {
     Paint timeBackground = new Paint();
     public List<JournalEntry> journalEntries;
     public int millisPerPixel = 2*MINS_IN_MILLIS;
-    public long endTime;
+    public long topTime;
+    public long bottomTime;
     private int w;
     private int h;
     private int capTop = 20;
@@ -68,6 +69,8 @@ public class GlucoseGraph extends View {
         timeFont.setTextSize(16);
 
         timeBackground.setColor(Color.rgb(21, 34, 44));
+
+        journalEntries = new ArrayList<JournalEntry>();
     }
 
     @Override
@@ -98,54 +101,48 @@ public class GlucoseGraph extends View {
 
     // Draws dates and hour markers for 6/12/18 with horizontal lines
     private void drawDays(Canvas canvas) {
-        if (!journalEntries.isEmpty()) {
-            Time firstDay = millisToStartOfDay(endTime);
-            Time lastDay = millisToStartOfDay(
-                journalEntries.get(journalEntries.size()-1).at.toMillis(false));
+        Time firstDay = millisToStartOfDay(topTime);
+        Time lastDay = millisToStartOfDay(bottomTime);
 
-            int xHigh = glucoseToX(valueHigh);
+        int xHigh = glucoseToX(valueHigh);
 
-            while (firstDay.toMillis(false) >= lastDay.toMillis(false)) {
-                long millisStart = firstDay.toMillis(false);
-                int y = timeToY(millisStart);
-                canvas.drawLine(8, y, w, y, gridPaint);
-                canvas.drawText(firstDay.format("%Y  %m-%d"), 12, y-6, dateFont);
+        while (firstDay.toMillis(false) >= lastDay.toMillis(false)) {
+            long millisStart = firstDay.toMillis(false);
+            int y = timeToY(millisStart);
+            canvas.drawLine(8, y, w, y, gridPaint);
+            canvas.drawText(firstDay.format("%Y  %m-%d"), 12, y-6, dateFont);
 
-                for (int hour : hourLines) {
-                    if (hour == 12) {
-                        // draw from 25 to center xHigh, and then same length after
-                        drawHour(canvas, millisStart, hour, 25, (xHigh-25)*2+25+1);
-                    } else {
-                        // draw from 25 and stop at crossing line at xHigh
-                        drawHour(canvas, millisStart, hour, 25, xHigh);
-                    }
+            for (int hour : hourLines) {
+                if (hour == 12) {
+                    // draw from 25 to center xHigh, and then same length after
+                    drawHour(canvas, millisStart, hour, 25, (xHigh-25)*2+25+1);
+                } else {
+                    // draw from 25 and stop at crossing line at xHigh
+                    drawHour(canvas, millisStart, hour, 25, xHigh);
                 }
-
-                // firstDay.monthDay -= 1; // doesn't change month/year
-                // TODO: manual set() doesn't handle daylight saving time
-                // TODO: (maybe) render DST changes?
-                firstDay.set(firstDay.toMillis(false)-24*60*60*1000);
             }
+
+            // firstDay.monthDay -= 1; // doesn't change month/year
+            // TODO: manual set() doesn't handle daylight saving time
+            // TODO: (maybe) render DST changes?
+            firstDay.set(firstDay.toMillis(false)-24*60*60*1000);
         }
     }
 
     private void drawJournalEntries(Canvas canvas) {
         JournalEntry lastEntry = null;
-        if (journalEntries != null) {
-
-            for (JournalEntry entry : journalEntries) {
-                if (!entry.glucose.isEmpty()) {
-                    drawTime(canvas, entry.at);
-                    if (lastEntry != null) {
-                        canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
-                    }
-                    lastEntry = entry;
+        for (JournalEntry entry : journalEntries) {
+            if (!entry.glucose.isEmpty()) {
+                drawTime(canvas, entry.at);
+                if (lastEntry != null) {
+                    canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
                 }
+                lastEntry = entry;
             }
+        }
 
-            for (JournalEntry entry : journalEntries) {
-                drawGlucosePoint(canvas, entry);
-            }
+        for (JournalEntry entry : journalEntries) {
+            drawGlucosePoint(canvas, entry);
         }
     }
 
@@ -185,7 +182,7 @@ public class GlucoseGraph extends View {
     }
 
     private Integer timeToY(long millis) {
-        return (int)((endTime-millis)/((long)millisPerPixel));
+        return (int)((topTime-millis)/((long)millisPerPixel));
     }
 
     private void drawGlucosePoint(Canvas canvas, JournalEntry entry) {

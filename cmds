@@ -1,0 +1,5 @@
+emulator-x86 -avd S2
+killall -s 18 emulator-x86
+killall -s 19 emulator-x86
+ant debug install -Dadb.device.arg=-e
+ant release install -Dadb.device.arg=-d

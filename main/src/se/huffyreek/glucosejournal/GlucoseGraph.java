@@ -9,9 +9,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -23,13 +26,22 @@ public class GlucoseGraph extends View {
     private static final int HOURS_IN_MILLIS = 60*60*1000;
     private static final int MINS_IN_MILLIS = 60*1000;
     Paint redPaint = new Paint();
+    Paint nightBackground = new Paint();
+    Paint sleepBackground = new Paint();
+    Paint exerciseBackground = new Paint();
     Paint glucosePoint = new Paint();
     Paint glucosePointFill = new Paint();
     Paint glucosePointGood = new Paint();
     Paint glucosePointFillGood = new Paint();
+    Paint glucoseLine;
+    Paint glucoseLineDark;
+    Paint glucoseLabelBackground;
+    Paint glucoseLabelBorder;
+    Paint glucoseLabelBorderGood;
     Paint gridPaint = new Paint();
     Paint dateFont = new Paint();
     Paint timeFont = new Paint();
+    Paint glucoseFont = new Paint();
     Paint timeBackground = new Paint();
     public List<JournalEntry> journalEntries;
     public int millisPerPixel = 2*MINS_IN_MILLIS;
@@ -39,6 +51,7 @@ public class GlucoseGraph extends View {
     private int h;
     private int capTop = 20;
     private int capBottom = 1;
+    private int carbohydratesCap = 300;
     private float valueLow = 3.6f;
     private float valueGood = 10.0f;
     private float valueHigh = 15.0f;
@@ -50,6 +63,9 @@ public class GlucoseGraph extends View {
         super(context, attrs);
 
         redPaint.setColor(Color.RED);
+        nightBackground.setColor(Color.rgb(35, 35, 35));
+        sleepBackground.setColor(Color.rgb(32, 32, 32));
+        exerciseBackground.setColor(Color.rgb(40, 78, 40));
         glucosePoint.setColor(Color.rgb(160, 160, 255));
         glucosePoint.setStyle(Style.STROKE);
         glucosePointFill.setColor(Color.rgb(100, 100, 255));
@@ -60,6 +76,44 @@ public class GlucoseGraph extends View {
         glucosePointFillGood.setColor(Color.rgb(100, 255, 100));
         glucosePointFillGood.setStyle(Style.FILL);
 
+
+        glucoseLine = new Paint() {{
+            setStyle(Paint.Style.STROKE);
+            setAntiAlias(true);
+            setStrokeWidth(1.5f);
+            setColor(Color.rgb(100, 100, 225));
+        }};
+
+        glucoseLineDark = new Paint() {{
+            setStyle(Paint.Style.STROKE);
+            setAntiAlias(true);
+            setStrokeWidth(3.0f);
+            setStrokeCap(Cap.ROUND);
+            setColor(Color.rgb(30, 30, 50));
+        }};
+
+        glucoseLabelBackground = new Paint() {{
+            setStyle(Style.FILL);
+            setColor(Color.rgb(40, 40, 40));
+        }};
+
+        glucoseLabelBorder = new Paint() {{
+            setStyle(Paint.Style.STROKE);
+            setAntiAlias(true);
+            setStrokeWidth(1.5f);
+            setStrokeCap(Cap.ROUND);
+            setColor(Color.rgb(60, 60, 165));
+        }};
+
+        glucoseLabelBorderGood = new Paint() {{
+            setStyle(Paint.Style.STROKE);
+            setAntiAlias(true);
+            setStrokeWidth(1.5f);
+            setStrokeCap(Cap.ROUND);
+            setColor(Color.rgb(60, 165, 60));
+        }};
+
+
         gridPaint.setColor(Color.GRAY);
 
         dateFont.setColor(Color.GRAY);
@@ -67,6 +121,9 @@ public class GlucoseGraph extends View {
 
         timeFont.setColor(Color.rgb(160, 160, 255));
         timeFont.setTextSize(16);
+
+        glucoseFont.setColor(Color.rgb(160, 160, 255));
+        glucoseFont.setTextSize(13);
 
         timeBackground.setColor(Color.rgb(21, 34, 44));
 
@@ -88,6 +145,25 @@ public class GlucoseGraph extends View {
         int xGood = glucoseToX(valueGood);
         int xHigh = glucoseToX(valueHigh);
 
+        Time firstDay = millisToStartOfDay(topTime);
+        long millisStart = firstDay.toMillis(false);
+        Time lastDay = millisToStartOfDay(bottomTime);
+        long millisLast= lastDay.toMillis(false);
+
+        // sleep background {{{1
+        for (long i=millisStart; i > millisLast; i -= 24*HOURS_IN_MILLIS) {
+            // sleep
+            //canvas.drawRect(0, timeToY(i+2*HOURS_IN_MILLIS), xHigh, timeToY(i-6*HOURS_IN_MILLIS), sleepBackground);
+            // night
+            canvas.drawRect(xHigh/2, timeToY(i+6*HOURS_IN_MILLIS), xHigh, timeToY(i-2*HOURS_IN_MILLIS), nightBackground);
+            // exercise
+            // cycling/running
+            //canvas.drawRect(0, timeToY(i+6*HOURS_IN_MILLIS), xHigh/2, timeToY(i+4*HOURS_IN_MILLIS), exerciseBackground);
+            // walking
+            //canvas.drawRect(0, timeToY(i+8*HOURS_IN_MILLIS), xHigh/4, timeToY(i+6*HOURS_IN_MILLIS), exerciseBackground);
+        }
+
+        // grid {{{1
         canvas.drawLine(0, futureRange/millisPerPixel, w, futureRange/millisPerPixel, gridPaint);
 
         canvas.drawLine(xLow, 0, xLow, h, gridPaint);
@@ -95,8 +171,10 @@ public class GlucoseGraph extends View {
         canvas.drawLine(xHigh, 0, xHigh, h, gridPaint);
 
         drawDays(canvas);
+        drawCarbohydratesJournalEntries(canvas);
         drawJournalEntries(canvas);
 
+        // }}}
     }
 
     // Draws dates and hour markers for 6/12/18 with horizontal lines
@@ -129,13 +207,57 @@ public class GlucoseGraph extends View {
         }
     }
 
+    private void drawCarbohydratesJournalEntries(Canvas canvas) {
+        JournalEntry lastEntry = null;
+        for (JournalEntry entry : journalEntries) {
+            if (!entry.carbohydrates.isEmpty()) {
+                //drawTime(canvas, entry.at);
+                /*if (lastEntry != null) {
+                    canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
+                }*/
+                Paint pLine1 = new Paint() {{
+                    setStyle(Paint.Style.STROKE);
+                    setAntiAlias(true);
+                    setStrokeWidth(1.5f);
+                    setColor(Color.rgb(255, 255, 255)); // Line color
+                }};
+
+                Paint pLineBorder1 = new Paint() {{
+                    setStyle(Paint.Style.STROKE);
+                    setAntiAlias(true);
+                    setStrokeWidth(3.0f);
+                    setStrokeCap(Cap.ROUND);
+                    setColor(Color.rgb(205, 205, 205)); // Darker version of the color
+                }};
+
+                Path p = new Path();
+                Point mid = new Point();
+                // ...
+                Point start = new Point(w-2, calculateY(entry));
+                Point end = new Point(w-2, calculateY(entry)-2*HOURS_IN_MILLIS/millisPerPixel);
+                mid.set((int)((start.x + end.x) / 2 - Float.parseFloat(entry.carbohydrates)/carbohydratesCap*w), (start.y + end.y) / 2);
+
+                // Draw line connecting the two points:
+                p.reset();
+                p.moveTo(start.x, start.y);
+                p.quadTo((start.x + mid.x) / 2, start.y, mid.x, mid.y);
+                p.quadTo((mid.x + end.x) / 2, end.y, end.x, end.y);
+
+                canvas.drawPath(p, pLineBorder1);
+                canvas.drawPath(p, pLine1);
+                lastEntry = entry;
+            }
+        }
+    }
+
     private void drawJournalEntries(Canvas canvas) {
         JournalEntry lastEntry = null;
         for (JournalEntry entry : journalEntries) {
             if (!entry.glucose.isEmpty()) {
                 drawTime(canvas, entry.at);
                 if (lastEntry != null) {
-                    canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucosePointFill);
+                    canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucoseLineDark);
+                    canvas.drawLine(calculateX(lastEntry), calculateY(lastEntry), calculateX(entry), calculateY(entry), glucoseLine);
                 }
                 lastEntry = entry;
             }
@@ -186,15 +308,33 @@ public class GlucoseGraph extends View {
     }
 
     private void drawGlucosePoint(Canvas canvas, JournalEntry entry) {
-        int x = calculateX(entry);
-        int y = calculateY(entry);
-        if (MainActivity.isFloat(entry.glucose) && Float.parseFloat(entry.glucose) >= valueLow && Float.parseFloat(entry.glucose) <= valueGood) {
-            canvas.drawCircle(x, y, 6, glucosePointGood);
-            canvas.drawCircle(x, y, 5, glucosePointFillGood);
-        } else {
-            canvas.drawCircle(x, y, 6, glucosePoint);
-            canvas.drawCircle(x, y, 5, glucosePointFill);
+        if (MainActivity.isFloat(entry.glucose)) {
+            int x = calculateX(entry);
+            int y = calculateY(entry);
+            float glucose = Float.parseFloat(entry.glucose);
+            if (glucose < valueHigh && glucose > valueLow) {
+                drawCenteredLabel(canvas, String.format("%.1f", glucose), x, y,
+                        glucoseLabelBackground, glucoseLabelBorderGood, glucoseFont);
+            } else {
+                drawCenteredLabel(canvas, String.format("%.1f", glucose), x, y,
+                        glucoseLabelBackground, glucoseLabelBorder, glucoseFont);
+            }
+
         }
+    }
+
+    private static void drawCenteredLabel(Canvas canvas, String text, int x, int y,
+            Paint bg, Paint border, Paint font) {
+        Rect bounds = new Rect();
+        font.getTextBounds(text, 0, text.length(), bounds);
+
+        RectF rect = new RectF(bounds);
+        rect.offsetTo(x-bounds.width()/2, y-bounds.height()/2);
+        rect.inset(-4, -3); // padding
+        canvas.drawRoundRect(rect, 3, 3, bg);
+        canvas.drawRoundRect(rect, 3, 3, border);
+
+        canvas.drawText(text, x-bounds.width()/2, y+bounds.height()/2, font);
     }
 
     private Time millisToStartOfDay(long millis) {

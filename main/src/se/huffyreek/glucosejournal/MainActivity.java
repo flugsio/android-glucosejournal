@@ -36,6 +36,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
 import android.view.Menu;
 
 public class MainActivity extends Activity {
@@ -71,9 +73,21 @@ public class MainActivity extends Activity {
 
         dbHandler = new GlucoseJournalDatabaseHelper(this);
 
+        initializeActionbar();
+
         initializeControls();
 
         refreshAll();
+    }
+
+    private void initializeActionbar() {
+        ActionBar mActionBar = getActionBar();
+        //mActionBar.setCustomView(R.layout.home_tabs);
+        //mActionBar.setDisplayShowHomeEnabled(false);
+        //mActionBar.setHomeButtonEnabled(false);
+        //mActionBar.setDisplayShowTitleEnabled(false);
+        //mActionBar.setDisplayShowCustomEnabled(true);
+
     }
 
     @Override
@@ -99,6 +113,31 @@ public class MainActivity extends Activity {
         buttonSave = (Button) findViewById(R.id.button_save);
         glucoseGraph = (GlucoseGraph) findViewById(R.id.graph);
 
+        /*
+        editAt.inputOracle = new InputOracle().
+            lengthGE(4).
+            integerGT(236);
+
+        editGlucose.inputOracle = new InputOracle().
+            lengthGE(4).
+            decimalCountGE(1).
+            stringEQ("-");
+            //stringEQ("0");
+
+        editCarbohydrates.inputOracle = new InputOracle().
+            lengthGE(3).
+            stringEQ("-").
+            //stringEQ("0").
+            integerGT(23);
+
+        editDose.inputOracle = new InputOracle().
+            lengthGE(4).
+            decimalCountGE(1).
+            stringEQ("-");
+            //stringEQ("0");
+        editDose.nextView = buttonSave;
+        */
+
         editAt.nextIfLength = 4;
         editAt.nextIfGreaterThan = 236;
 
@@ -116,6 +155,7 @@ public class MainActivity extends Activity {
         editDose.nextIfDecimals = 1;
         editDose.nextIfEqual = "-";
         //editDose.nextIfEqual = "0";
+        editDose.nextView = buttonSave;
 
         glucoseGraph.millisPerPixel = millisPerPixel;
     }
@@ -194,8 +234,9 @@ public class MainActivity extends Activity {
             glucoseGraph.bottomTime =
                 journalEntries.get(journalEntries.size()-1).at.toMillis(false);
         } else {
-            glucoseGraph.bottomTime = glucoseGraph.topTime + 24*60*60*1000;
+            glucoseGraph.bottomTime = glucoseGraph.topTime - 24*60*60*1000;
         }
+        glucoseGraph.setMinimumHeight((int)((glucoseGraph.topTime-glucoseGraph.bottomTime)/glucoseGraph.millisPerPixel));
         glucoseGraph.invalidate();
     }
 
